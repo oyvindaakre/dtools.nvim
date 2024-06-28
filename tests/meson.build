@@ -9,3 +9,10 @@ exe = executable(
 )
 
 test(exe.name(), exe)
+
+exe = executable(
+  'test_example_other',
+  'test_example.c',
+  dependencies: dependency('criterion'),
+)
+test(exe.name(),  exe)
