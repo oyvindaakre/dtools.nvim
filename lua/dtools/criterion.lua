@@ -113,15 +113,10 @@ function M.start_debug_server(test_exe, test_suite, test_name)
     on_stderr = function(_, data)
       print(data)
     end,
-    on_exit = function(_, return_val)
-      retval = return_val
-    end,
+    on_exit = function(_, return_val) end,
   })
   job:start()
 
-  if retval ~= 0 then
-    return -1
-  end
   return job.pid
 end
 return M
