@@ -62,7 +62,7 @@ end
 ---@param path string path/to/file.c
 ---@return string
 function M.get_filename(path)
-  return path:match("[^/]*.c$")
+  return path:match("[^/]*$")
 end
 
 ---Uses meson introspect CLI to find the name of the test executable using the path of the file that is open in the given buffer
@@ -72,10 +72,12 @@ end
 ---so that is a known limitation and is currently not handled.
 ---@param bufnr integer
 ---@param builddir string
----@return string
+---@return string | nil
 function M.get_test_exe_from_buffer(bufnr, builddir)
   local bufname = vim.api.nvim_buf_get_name(bufnr)
   local targets = meson.get_targets(builddir)
+  local exe_found = {}
+
   for _, target in ipairs(targets) do
     -- print(vim.inspect(target["target_sources"]))
     for _, target_source in ipairs(target["target_sources"]) do
@@ -83,12 +85,37 @@ function M.get_test_exe_from_buffer(bufnr, builddir)
       for _, source in ipairs(target_source["sources"]) do
         -- print(vim.inspect(source))
         if source == bufname then
-          return target["filename"][1]
+          print("Found exe: " .. target["filename"][1])
+          table.insert(exe_found, target["filename"][1])
         end
       end
     end
   end
-  return ""
+
+  print("Num exes found: " .. tostring(#exe_found))
+
+  if #exe_found == 1 then
+    return exe_found[1]
+  end
+
+  -- local selected_exe = nil
+  -- vim.ui.select(exe_found, {
+  --   prompt = "Multiple tests available, please select:",
+  --   format_item = function(item)
+  --     print("Formatting item: " .. vim.inspect(item))
+  --     return M.get_filename(item)
+  --   end,
+  -- }, function(choice)
+  --   print("User selected: " .. vim.inspect(choice))
+  --   selected_exe = choice
+  -- end)
+  -- print("Hello?")
+  local choice = vim.fn.inputlist(exe_found)
+  if choice < 1 or choice > #exe_found then
+    return nil
+  end
+
+  return exe_found[choice]
 end
 
 return M
