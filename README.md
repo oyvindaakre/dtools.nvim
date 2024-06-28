@@ -6,11 +6,14 @@ This is my collection of develop and debug tools for working with projects using
 ```lua
 return {
     "oyvindaakre/dtools.nvim",
+    dependencies = {
+        "mfussenegger/nvim-dap",
+    }
 }
 ```
 
 ## Configuration
-Dynamically configure the build directory for the current open buffer with a custom function:
+Dynamically set which build directory that belongs to the currently open buffer with a custom function:
 ```lua
 local dtools = require("dtools")({
     builddir = function(bufnr)
@@ -21,12 +24,16 @@ local dtools = require("dtools")({
             return "build"
         end
     end,
+
+    --- Add a keymap to run the plugin
+    vim.keymap.set("n", "<leader>dt", dtools.debug_test, { desc = "[D]ebug: [T]est" })
 })
 ```
 
 ## Example: Configuration for debugging a unit test
 This configuration adds a new entry for debugging `.c`-files anmed "Debug unit test".
-With this you should be able to place your cursor at or below the test function that you want to debug and when selecting the new configuration, a debug session will start for that particular function. 
+With this you should be able to place your cursor at or below the test function that you want to debug and 
+when triggering `dtools.debug_test(), a debug session will start for that particular function.
 ```lua
 --- Somewhere in your debug configuration
 local dap = require("dap")
@@ -40,6 +47,7 @@ local dtools = require("dtools")({
             return "build"
         end
     end,
+    vim.keymap.set("n", "<leader>dt", dtools.debug_test, { desc = "[D]ebug: [T]est" })
 })
 
 --- Configure native GDB debug adapter
@@ -50,17 +58,18 @@ dap.adapters.gdb = {
 }
 
 --- Add a configuration for debugging unit tests
+--- Note that this is automatically called when you first call dtools.debug_test()
 local debug_unit_test = {
     name = "Debug unit test",
     type = "gdb",
     request = "attach",
     program = function()
-        local _, err = dtools.start_debug_server()
+        local exe, err = dtools.start_debug_server()
         if err ~= nil then
             print(err)
             return nil
         end
-        return dtools.get_executable_at_cursor()
+        return exe 
     end,
     cwd = "${workspaceFolder}",
     stopAtBeginningOfMainSubprogram = true,

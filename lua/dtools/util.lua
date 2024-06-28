@@ -72,7 +72,7 @@ end
 ---so that is a known limitation and is currently not handled.
 ---@param bufnr integer
 ---@param builddir string
----@return string | nil
+---@return any
 function M.get_test_exe_from_buffer(bufnr, builddir)
   local bufname = vim.api.nvim_buf_get_name(bufnr)
   local targets = meson.get_targets(builddir)
@@ -85,37 +85,15 @@ function M.get_test_exe_from_buffer(bufnr, builddir)
       for _, source in ipairs(target_source["sources"]) do
         -- print(vim.inspect(source))
         if source == bufname then
-          print("Found exe: " .. target["filename"][1])
+          -- print("Found exe: " .. target["filename"][1])
           table.insert(exe_found, target["filename"][1])
         end
       end
     end
   end
 
-  print("Num exes found: " .. tostring(#exe_found))
-
-  if #exe_found == 1 then
-    return exe_found[1]
-  end
-
-  -- local selected_exe = nil
-  -- vim.ui.select(exe_found, {
-  --   prompt = "Multiple tests available, please select:",
-  --   format_item = function(item)
-  --     print("Formatting item: " .. vim.inspect(item))
-  --     return M.get_filename(item)
-  --   end,
-  -- }, function(choice)
-  --   print("User selected: " .. vim.inspect(choice))
-  --   selected_exe = choice
-  -- end)
-  -- print("Hello?")
-  local choice = vim.fn.inputlist(exe_found)
-  if choice < 1 or choice > #exe_found then
-    return nil
-  end
-
-  return exe_found[choice]
+  -- print("Num exes found: " .. tostring(#exe_found))
+  return exe_found
 end
 
 return M
