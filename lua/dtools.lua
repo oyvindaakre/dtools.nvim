@@ -53,7 +53,7 @@ function M.debug_test()
     return false, "No test to run"
   end
 
-  local builddir = M.options.builddir and M.options.builddir(bufnr) or "build"
+  local builddir = M.get_builddir()
   local test_exe = util.get_test_exe_from_buffer(bufnr, builddir)
 
   if test_exe == nil then
@@ -85,6 +85,14 @@ function M.debug_test()
   end
 
   return true
+end
+
+---Get the build directory that is active for the currently open buffer
+---This function will try to use the user configuration and defaults to "build" if not set.
+---@return string
+function M.get_builddir()
+  local bufnr = vim.api.nvim_get_current_buf()
+  return M.options.builddir and M.options.builddir(bufnr) or "build"
 end
 
 --- Plugin options
