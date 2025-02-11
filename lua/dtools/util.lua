@@ -65,6 +65,10 @@ function M.get_filename(path)
   return path:match("[^/]*$")
 end
 
+local function isTableEmpty(t)
+  return t == nil or next(t) == nil
+end
+
 ---Uses meson introspect CLI to find the name of the test executable using the path of the file that is open in the given buffer
 ---Meson will output a JSON document with the name of all executables and sources used to build them, among other information.
 ---We want to find a test executable that uses the source file that is open in the given buffer.
@@ -80,13 +84,14 @@ function M.get_test_exe_from_buffer(bufnr, builddir)
 
   for _, target in ipairs(targets) do
     -- print(vim.inspect(target["target_sources"]))
-    for _, target_source in ipairs(target["target_sources"]) do
-      -- print(vim.inspect(source))
-      for _, source in ipairs(target_source["sources"]) do
-        -- print(vim.inspect(source))
-        if source == bufname then
-          -- print("Found exe: " .. target["filename"][1])
-          table.insert(exe_found, target["filename"][1])
+    for _, ts in ipairs(target["target_sources"]) do
+      local sources = ts["sources"]
+      if not isTableEmpty(sources) then
+        for _, src in ipairs(sources) do
+          if src == bufname then
+            -- print("Found exe: " .. target["filename"][1])
+            table.insert(exe_found, target["filename"][1])
+          end
         end
       end
     end
