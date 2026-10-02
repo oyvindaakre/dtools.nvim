@@ -61,7 +61,7 @@ end
 ---@param test_name string | nil
 ---@param additional_args string[]
 ---@return table
-function M.make_test_args(test_suite, test_name, additional_arg)
+function M.make_test_args(test_suite, test_name, additional_args)
   local test_args = {}
 
   ---We pass --filter=test_suite/test_name to run the named test under the named suite (or all if not specified)
@@ -102,20 +102,28 @@ function M.start_debug_server(test_exe, test_suite, test_name)
   table.insert(test_args, test_to_run)
   table.insert(test_args, "--debug")
 
-  local retval = -1
+  -- Kill any leftover gdbserver from a previous session and wait for port to free
+  vim.fn.system("pkill -x gdbserver 2>/dev/null")
+  vim.wait(2000, function()
+    vim.fn.system("ss -tln | grep -q ':1234'")
+    return vim.v.shell_error ~= 0
+  end, 50)
 
   local job = Job:new({
     command = test_exe,
     args = test_args,
-    on_stdout = function(_, data)
-      print(data)
-    end,
-    on_stderr = function(_, data)
-      print(data)
-    end,
-    on_exit = function(_, return_val) end,
+    on_exit = function(_, _) end,
   })
   job:start()
+
+  -- Wait until gdbserver is listening on :1234
+  local ok = vim.wait(5000, function()
+    vim.fn.system("ss -tln | grep -q ':1234'")
+    return vim.v.shell_error == 0
+  end, 50)
+  if not ok then
+    vim.notify("dtools: timed out waiting for gdbserver", vim.log.levels.WARN)
+  end
 
   return job.pid
 end
